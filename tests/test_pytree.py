@@ -67,6 +67,9 @@ favoriteColors
     tree = pytree.iris()
     assert len(tree.clone()[0:2]) == 2
 
+    tree = pytree(sample)
+    assert tree.get("favoriteColors blue blue1") == "1"
+
 
 def test_command_line_interface():
     """Test the CLI."""

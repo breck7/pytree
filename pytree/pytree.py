@@ -3,6 +3,8 @@
 
 """Main module."""
 
+import re
+
 datasets = {}
 datasets["iris"] = """sepal_length,sepal_width,petal_length,petal_width,species
 6.1,3,4.9,1.8,virginica
@@ -45,7 +47,7 @@ class ImmutablePytree():
     def _getWords(self, startFrom):
         if not hasattr(self, "_words"):
             self._words = self._getLine().split(self.getZI())
-        return self._words.slice(startFrom) if startFrom else self._words
+        return self._words[startFrom:] if startFrom else self._words
   
     def getWords(self):
         return self._getWords(0)
@@ -117,7 +119,7 @@ class ImmutablePytree():
   
     def _textToContentAndChildrenTuple(self, text) :
       lines = text.split(self.getYIRegex())
-      firstLine = lines.pop(-1)
+      firstLine = lines.pop(0)
       xi = self.getXI()
       if not len(lines):
           return [firstLine, None]
@@ -244,6 +246,33 @@ class ImmutablePytree():
     def _hasKeyword(self, keyword):
         return keyword in self._getIndex()
 
+    def get(self, keywordPath) :
+        node = self._getNodeByPath(keywordPath)
+        return None if node == None else node.getContent()
+
+    def getNode(self, keywordPath) :
+        return self._getNodeByPath(keywordPath)
+
+    def getContent(self) :
+        words = self.getWordsFrom(1)
+        return self.getZI().join(words) if len(words) else None
+
+    def indexOfLast(self, keyword) :
+        if keyword in self._getIndex():
+            return self._getIndex()[keyword]
+        return -1
+
+    def _getNodeByPath(self, keywordPath) :
+        xi = self.getXI()
+        if not keywordPath.count(xi):
+          index = self.indexOfLast(keywordPath)
+          return None if index == -1 else self[index]
+
+        parts = keywordPath.split(xi)
+        current = parts.pop(0)
+        currentNode = self[self.indexOfLast(current)]
+        return currentNode._getNodeByPath(xi.join(parts)) if currentNode else None
+
     def pushContentAndChildren(self, content, children) :
         index = len(self)
 
@@ -270,6 +299,60 @@ class ImmutablePytree():
     def getWordsFrom(self, startFrom):
         return self._getWords(startFrom)
  
+    def toCsv(self) :
+        return self.toDelimited(",")
+
+    def _getUnionNames(self) :
+        if not len(self):
+            return []
+
+        obj = {}
+        for node in self:
+            if not len(node):
+                continue
+            for child in node:
+                obj[child.getKeyword()] = 1
+        return obj.keys()
+
+    def toDelimited(self, delimiter, header = None) :
+        regex = re.compile('(\\n|\\"|\\' + delimiter + ')')
+        def cellFn(string, row, column):
+            if regex.match(str(string)):
+                return '"' + string.replace('"', '""') + '"'
+            else:
+                return string
+
+        header = header or self._getUnionNames()
+        return self._toDelimited(delimiter, header, cellFn)
+
+    def _toDelimited(self, delimiter, header, cellFn) :
+        (headerRow, rows) = self._toArrays(header, cellFn)
+        return delimiter.join(headerRow) + "\n" + "\n".join(map(lambda row : delimiter.join(row), rows))
+
+    def __bool__(self):
+        return len(self) > 0 or len(self.getLine()) > 0
+
+    def _toArrays(self, header, cellFn) :
+      skipHeaderRow = 1
+      headerArray = []
+      for index, columnName in enumerate(header):
+        headerArray.append(cellFn(columnName, 0, index))
+      rows = []
+      for rowNumber, node in enumerate(self):
+        vals = []
+        for columnIndex, columnName in enumerate(header):
+          childNode = node.getNode(columnName)
+          content = childNode.getContentWithChildren() if childNode else ""
+          vals.append(cellFn(content, rowNumber + skipHeaderRow, columnIndex))
+        rows.append(vals)
+      
+      return headerArray, rows
+
+    def getContentWithChildren(self) :
+        # todo: deprecate
+        content = self.getContent()
+        return (content if content else "") + (self.getYI() + self._childrenToString() if len(self) else "")
+
     @staticmethod
     def fromCsv(str):
         return pytree.fromDelimited(str, ",", '"')
@@ -337,8 +420,8 @@ class ImmutablePytree():
           # If the row contains too many columns, shift the extra columns onto the last one.
           # this allows you to not have to escape delimiter characters in the final column.
           if len(row) > numberOfColumns:
-            row[numberOfColumns - 1] = delimiter.join(row.slice[numberOfColumns - 1:])
-            row = row.slice[0: numberOfColumns]
+            row[numberOfColumns - 1] = delimiter.join(row[numberOfColumns - 1:])
+            row = row[0: numberOfColumns]
           elif len(row) < numberOfColumns:
             # If the row is missing columns add empty columns until it is full.
             # self.allows you to make including delimiters for empty ending columns in each row optional.
@@ -436,8 +519,16 @@ if __name__ == '__main__':
 #    tree = pytree.iris()
 #    print(tree.clone()[0:2])
     
-    tree = pytree("seed 2")
-    assert "seed" in tree
+    tree = pytree(epoch0)
+#    print(tree[0][1])
+
+ #   print(tree.get("epoch train_loss"))
+
+    tree = pytree(epoch0)
+    print(tree.toCsv())
+
+    tree = pytree.iris()
+    print(tree.toCsv())
     
     # tree[0:2]
     # assert len(tree) == 10
