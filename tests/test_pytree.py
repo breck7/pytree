@@ -1,14 +1,10 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
 """Tests for `pytree` package."""
 
 import pytest
-
 from click.testing import CliRunner
 
-from pytree import pytree as PyTree
 from pytree import cli
+from pytree import pytree as PyTree
 
 
 @pytest.fixture
@@ -26,6 +22,7 @@ def test_basic(response):
     pytree = PyTree.pytree
     tree = pytree("hello world this is a test\nit worked\nnest\n it")
     assert len(tree) == 3
+
     sample = """name John
 age
 favoriteColors
@@ -38,7 +35,7 @@ favoriteColors
     tree = pytree(sample)
     assert sample == str(tree)
 
-    di = {"seed": 428, "name" : "joe"}
+    di = {"seed": 428, "name": "joe"}
     tree = pytree(di)
     print(str(tree))
     assert len(tree) == 2
@@ -46,24 +43,21 @@ favoriteColors
     tree = pytree.iris()
     assert len(tree) == 10
 
-
-    # Dics can't have dupe keys
-    di = {"seed": 428, "sib" : {"frank" : 2}, "name" : "joe", "seed": 12}
+    # Dicts can't have dupe keys
+    di = {"seed": 428, "sib": {"frank": 2}, "name": "joe", "seed": 12}  # NOQA
     tree = pytree(di)
     assert len(tree) == 3
-
 
     tree = pytree.iris()
     i = 0
     for item in tree:
         i += 1
-    
-    assert i == 10
 
+    assert i == 10
 
     tree = pytree("seed 2")
     assert "seed" in tree
-    
+
     tree = pytree.iris()
     assert len(tree.clone()[0:2]) == 2
 
