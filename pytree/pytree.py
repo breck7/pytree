@@ -158,18 +158,18 @@ class ImmutablePytree():
         # todo: return RegExp(self.getYI(), "g")
         return self.getYI()
 
-    def _getIndentCount(self, str):
+    def _getIndentCount(self, str_):
         level = 0
         edgeChar = self.getXI()
-        length = len(str)
-        while level < length and str[level] == edgeChar:
+        length = len(str_)
+        while level < length and str_[level] == edgeChar:
             level += 1
         return level
 
-    def _parseString(self, str):
-        if not str:
+    def _parseString(self, str_):
+        if not str_:
             return self
-        lines = str.split(self.getYIRegex())
+        lines = str_.split(self.getYIRegex())
         parentStack = []
         currentIndentCount = -1
         lastNode = self
@@ -350,39 +350,39 @@ class ImmutablePytree():
         return (content if content else "") + (self.getYI() + self._childrenToString() if len(self) else "")
 
     @staticmethod
-    def fromCsv(str):
-        return pytree.fromDelimited(str, ",", '"')
+    def fromCsv(str_):
+        return pytree.fromDelimited(str_, ",", '"')
 
     @staticmethod
-    def fromJson(str):
-        return pytree(json.parse(str))
+    def fromJson(str_):
+        return pytree(json.parse(str_))
 
     @staticmethod
-    def fromSsv(str):
-        return pytree.fromDelimited(str, " ", '"')
+    def fromSsv(str_):
+        return pytree.fromDelimited(str_, " ", '"')
 
     @staticmethod
-    def fromTsv(str):
-        return pytree.fromDelimited(str, "\t", '"')
+    def fromTsv(str_):
+        return pytree.fromDelimited(str_, "\t", '"')
 
     @staticmethod
-    def fromDelimited(str, delimiter, quoteChar):
-        rows = pytree._getEscapedRows(str, delimiter, quoteChar)
+    def fromDelimited(str_, delimiter, quoteChar):
+        rows = pytree._getEscapedRows(str_, delimiter, quoteChar)
         return pytree._rowsToTreeNode(rows, delimiter, True)
 
     @staticmethod
-    def _getEscapedRows(str, delimiter: str, quoteChar: str) -> List[List[str]]:
-        if str.count(quoteChar):
-            return pytree._strToRows(str, delimiter, quoteChar)
+    def _getEscapedRows(str_, delimiter: str, quoteChar: str) -> List[List[str]]:
+        if str_.count(quoteChar):
+            return pytree._strToRows(str_, delimiter, quoteChar)
         else:
             escapedRows = []
-            for line in str.split("\n"):
+            for line in str_.split("\n"):
                 escapedRows.append(line.split(delimiter))
             return escapedRows
 
     @staticmethod
-    def fromDelimitedNoHeaders(str, delimiter, quoteChar):
-        rows = pytree._getEscapedRows(str, delimiter, quoteChar)
+    def fromDelimitedNoHeaders(str_, delimiter, quoteChar):
+        rows = pytree._getEscapedRows(str_, delimiter, quoteChar)
         return pytree._rowsToTreeNode(rows, delimiter, False)
 
     @staticmethod
@@ -444,11 +444,11 @@ class ImmutablePytree():
         return pytree.fromCsv(datasets["iris"])
 
     @staticmethod
-    def _strToRows(str, delimiter, quoteChar, newLineChar="\n"):
+    def _strToRows(str_, delimiter, quoteChar, newLineChar="\n"):
         rows = [[]]
-        length = len(str)
+        length = len(str_)
         currentCell = ""
-        inQuote = str[0:1] == quoteChar
+        inQuote = str_[0:1] == quoteChar
         currentPosition = 1 if inQuote else 0
         nextChar = None
         isLastChar = None
@@ -457,9 +457,9 @@ class ImmutablePytree():
         isNextCharAQuote = None
 
         while currentPosition < length:
-            char = str[currentPosition]
+            char = str_[currentPosition]
             isLastChar = currentPosition + 1 == length
-            nextChar = str[currentPosition + 1]
+            nextChar = str_[currentPosition + 1]
             isNextCharAQuote = nextChar == quoteChar
 
             if inQuote:
