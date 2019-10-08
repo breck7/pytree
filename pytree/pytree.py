@@ -65,158 +65,158 @@ class ImmutablePytree():
     def _set_line_and_children(self, line, children, index=None):
         if index is None:
             index = len(self)
-        parse_class = self.parseNodeType(line)
+        parse_class = self.parse_node_type(line)
         parsed_node = parse_class(children, line, self)
         adjusted_index = len(self) + index if index < 0 else index
 
         self._get_children_array().insert(adjusted_index, parsed_node)
 
         # t
-        if self._hasIndex():
-            self._makeIndex(adjusted_index)
+        if self._has_index():
+            self._make_index(adjusted_index)
         return parsed_node
 
     def get_keyword(self):
         return self.get_words()[0]
 
-    def _hasIndex(self):
+    def _has_index(self):
         return hasattr(self, "_index")
 
-    def _makeIndex(self, startAt=0):
-        if not self._hasIndex() or startAt == 0:
+    def _make_index(self, start_at=0):
+        if not self._has_index() or start_at == 0:
             self._index = {}
-        nodes = self._getChildren()
+        nodes = self._get_children()
         length = len(nodes)
 
-        for index in range(startAt, length):
+        for index in range(start_at, length):
             self._index[nodes[index].get_keyword()] = index
 
-    def _set_children(self, content, circularCheckArray=None):
+    def _set_children(self, content, circular_check_array=None):
         self._clear_children()
         if not content:
             return self
 
         # set from string
         if type(content) == str:
-            return self._parseString(content)
+            return self._parse_string(content)
 
         # set from tree object
-        if type(content) == pytree:
+        if type(content) == Pytree:
             me = self
-            for node in content._getChildren():
+            for node in content._get_children():
                 me._set_line_and_children(node.get_line(), node.children_to_string())
             return self
 
         # If we set from object, create an array of inserted objects to avoid circular loops
-        if not circularCheckArray:
-            circularCheckArray = [content]
+        if not circular_check_array:
+            circular_check_array = [content]
 
-        return self._setFromObject(content, circularCheckArray)
+        return self._set_from_object(content, circular_check_array)
 
-    def _setFromObject(self, content, circularCheckArray):
+    def _set_from_object(self, content, circular_check_array):
         for keyword in content:
             # filter out methods?
-            self._appendFromObjectTuple(keyword, content[keyword], circularCheckArray)
+            self._append_from_object_tuple(keyword, content[keyword], circular_check_array)
         return self
 
-    def _textToContentAndChildrenTuple(self, text):
-        lines = text.split(self.getYIRegex())
-        firstLine = lines.pop(0)
-        xi = self.getXI()
+    def _text_to_content_and_children_tuple(self, text):
+        lines = text.split(self.get_yi_regex())
+        first_line = lines.pop(0)
+        xi = self.get_xi()
         if not len(lines):
-            return [firstLine, None]
+            return [first_line, None]
 
         lines = list(map(lambda line: line if line[0:1] == xi else xi + line, lines))
         lines = list(map(lambda line: line[1:], lines))
-        children = self.getYI().join(lines)
+        children = self.get_yi().join(lines)
 
-        return [firstLine, children]
+        return [first_line, children]
 
-    def _appendFromObjectTuple(self, keyword, content, circularCheckArray):
+    def _append_from_object_tuple(self, keyword, content, circular_check_array):
         line = ""
-        xi = self.getXI()
+        xi = self.get_xi()
         children = None
         if content is None:
             line = keyword + xi + "None"
         elif content == "":
             line = keyword
         elif type(content) == str:
-            theTuple = self._textToContentAndChildrenTuple(content)
-            line = keyword + xi + theTuple[0]
-            children = theTuple[1]
-        elif type(content) == pytree:
+            the_tuple = self._text_to_content_and_children_tuple(content)
+            line = keyword + xi + the_tuple[0]
+            children = the_tuple[1]
+        elif type(content) == Pytree:
             line = keyword
-            children = pytree(content.children_to_string(), content.get_line())
+            children = Pytree(content.children_to_string(), content.get_line())
         elif type(content) in [int, float, complex, bool, bytes]:
             line = keyword + xi + str(content)
-        elif content not in circularCheckArray:
-            circularCheckArray.append(content)
+        elif content not in circular_check_array:
+            circular_check_array.append(content)
             line = keyword
             if len(content):
-                children = pytree()._set_children(content, circularCheckArray)
+                children = Pytree()._set_children(content, circular_check_array)
         else:
             # iirc self.is return early from circular
             return
         self._set_line_and_children(line, children)
 
-    def getYIRegex(self):
+    def get_yi_regex(self):
         # todo: return RegExp(self.getYI(), "g")
-        return self.getYI()
+        return self.get_yi()
 
-    def _getIndentCount(self, str_):
+    def _get_indent_count(self, str_):
         level = 0
-        edgeChar = self.getXI()
+        edge_char = self.get_xi()
         length = len(str_)
-        while level < length and str_[level] == edgeChar:
+        while level < length and str_[level] == edge_char:
             level += 1
         return level
 
-    def _parseString(self, str_):
+    def _parse_string(self, str_):
         if not str_:
             return self
-        lines = str_.split(self.getYIRegex())
-        parentStack = []
-        currentIndentCount = -1
-        lastNode = self
+        lines = str_.split(self.get_yi_regex())
+        parent_stack = []
+        current_indent_count = -1
+        last_node = self
         for line in lines:
-            indentCount = self._getIndentCount(line)
-            if indentCount > currentIndentCount:
-                currentIndentCount += 1
-                parentStack.append(lastNode)
-            elif indentCount < currentIndentCount:
+            indent_count = self._get_indent_count(line)
+            if indent_count > current_indent_count:
+                current_indent_count += 1
+                parent_stack.append(last_node)
+            elif indent_count < current_indent_count:
                 # pop things off stack
-                while indentCount < currentIndentCount:
-                    parentStack.pop()
-                    currentIndentCount -= 1
+                while indent_count < current_indent_count:
+                    parent_stack.pop()
+                    current_indent_count -= 1
 
-            lineContent = line[currentIndentCount:]
-            parent = parentStack[len(parentStack) - 1]
-            parse_class = parent.parseNodeType(lineContent)
-            lastNode = parse_class(None, lineContent, parent)
-            parent._get_children_array().append(lastNode)
+            line_content = line[current_indent_count:]
+            parent = parent_stack[len(parent_stack) - 1]
+            parse_class = parent.parseNodeType(line_content)
+            last_node = parse_class(None, line_content, parent)
+            parent._get_children_array().append(last_node)
         return self
 
-    def parseNodeType(self, lineContent):
-        return pytree
+    def parse_node_type(self, line_content):
+        return Pytree
 
-    def getXI(self):
+    def get_xi(self):
         return " "
 
-    def getYI(self):
+    def get_yi(self):
         return "\n"
 
     def __len__(self):
-        return len(self._getChildren())
+        return len(self._get_children())
 
-    def _childrenToString(self, indentCount=0, language=None):
+    def _children_to_string(self, indent_count=0, language=None):
         language = language or self
-        res = map(lambda node: node.toString(indentCount, language), self._getChildren())
+        res = map(lambda node: node.toString(indent_count, language), self._get_children())
         return language.getYI().join(res)
 
     def children_to_string(self):
-        return self._childrenToString()
+        return self._children_to_string()
 
-    def _getChildren(self):
+    def _get_children(self):
         return self._get_children_array()
 
     def _get_children_array(self):
@@ -225,52 +225,52 @@ class ImmutablePytree():
         return self._children
 
     def __getitem__(self, position):
-        return self._getChildren()[position]
+        return self._get_children()[position]
 
-    def appendLineAndChildren(self, line, children):
+    def append_line_and_children(self, line, children):
         return self._set_line_and_children(line, children)
 
     def has(self, keyword):
-        return self._hasKeyword(keyword)
+        return self._has_keyword(keyword)
 
     def __contains__(self, keyword):
         return self.has(keyword)
 
-    def _getIndex(self):
+    def _get_index(self):
         # StringMap<int> {keyword: index}
         # When there are multiple tails with the same keyword, _index stores the last content.
-        if not self._hasIndex():
-            self._makeIndex()
+        if not self._has_index():
+            self._make_index()
         return self._index
 
-    def _hasKeyword(self, keyword):
-        return keyword in self._getIndex()
+    def _has_keyword(self, keyword):
+        return keyword in self._get_index()
 
-    def get(self, keywordPath):
-        node = self._get_node_by_path(keywordPath)
+    def get(self, keyword_path):
+        node = self._get_node_by_path(keyword_path)
         return None if node is None else node.getContent()
 
-    def getNode(self, keywordPath):
-        return self._get_node_by_path(keywordPath)
+    def get_node(self, keyword_path):
+        return self._get_node_by_path(keyword_path)
 
-    def getContent(self):
-        words = self.getWordsFrom(1)
+    def get_content(self):
+        words = self.get_words_from(1)
         return self.get_zi().join(words) if len(words) else None
 
-    def indexOfLast(self, keyword):
-        if keyword in self._getIndex():
-            return self._getIndex()[keyword]
+    def index_of_last(self, keyword):
+        if keyword in self._get_index():
+            return self._get_index()[keyword]
         return -1
 
-    def _get_node_by_path(self, keywordPath):
-        xi = self.getXI()
-        if not keywordPath.count(xi):
-            index = self.indexOfLast(keywordPath)
+    def _get_node_by_path(self, keyword_path):
+        xi = self.get_xi()
+        if not keyword_path.count(xi):
+            index = self.index_of_last(keyword_path)
             return None if index == -1 else self[index]
 
-        parts = keywordPath.split(xi)
+        parts = keyword_path.split(xi)
         current = parts.pop(0)
-        current_node = self[self.indexOfLast(current)]
+        current_node = self[self.index_of_last(current)]
         return current_node._get_node_by_path(xi.join(parts)) if current_node else None
 
     def push_content_and_children(self, content, children):
@@ -280,29 +280,29 @@ class ImmutablePytree():
             index += 1
 
         line = str(index) + ("" if content is None else self.get_zi() + content)
-        return self.appendLineAndChildren(line, children)
+        return self.append_line_and_children(line, children)
 
     def __str__(self):
-        return self.toString()
+        return self.to_string()
 
-    def toString(self, indentCount=0, language=None):
+    def to_string(self, indent_count=0, language=None):
         language = language or self
-        if self.isRoot():
-            return self._childrenToString(indentCount, language)
-        content = (self.getXI() * indentCount) + self.get_line(language)
-        value = content + (language.getYI() + self._childrenToString(indentCount + 1, language) if len(self) else "")
+        if self.is_root():
+            return self._children_to_string(indent_count, language)
+        content = (self.get_xi() * indent_count) + self.get_line(language)
+        value = content + (language.getYI() + self._children_to_string(indent_count + 1, language) if len(self) else "")
         return value
 
-    def isRoot(self, relativeTo=None):
-        return relativeTo == self or not self.get_parent()
+    def is_root(self, relative_to=None):
+        return relative_to == self or not self.get_parent()
 
-    def getWordsFrom(self, startFrom):
-        return self._get_word(startFrom)
+    def get_words_from(self, start_from):
+        return self._get_word(start_from)
 
-    def toCsv(self):
-        return self.toDelimited(",")
+    def to_csv(self):
+        return self.to_delimited(",")
 
-    def _getUnionNames(self):
+    def _get_union_names(self):
         if len(self) != 0:
             return []
 
@@ -314,89 +314,89 @@ class ImmutablePytree():
                 obj[child.get_keyword()] = 1
         return obj.keys()
 
-    def toDelimited(self, delimiter, header=None):
+    def to_delimited(self, delimiter, header=None):
         regex = re.compile('(\\n|\\"|\\' + delimiter + ')')
 
-        def cellFn(string, row, column):
+        def cell_fn(string, row, column):
             if regex.match(str(string)):
                 return '"' + string.replace('"', '""') + '"'
             else:
                 return string
 
-        header = header or self._getUnionNames()
-        return self._toDelimited(delimiter, header, cellFn)
+        header = header or self._get_union_names()
+        return self._to_delimited(delimiter, header, cell_fn)
 
-    def _toDelimited(self, delimiter, header, cellFn):
-        (head_row, rows) = self._toArrays(header, cellFn)
+    def _to_delimited(self, delimiter, header, cell_fn):
+        (head_row, rows) = self._to_arrays(header, cell_fn)
         return delimiter.join(head_row) + "\n" + "\n".join(map(lambda row: delimiter.join(row), rows))
 
     def __bool__(self):
         return len(self) > 0 or len(self.get_line()) > 0
 
-    def _toArrays(self, header, cellFn):
-        skipHeaderRow = 1
-        headerArray = []
+    def _to_arrays(self, header, cell_fn):
+        skip_header_row = 1
+        header_array = []
         for index, columnName in enumerate(header):
-            headerArray.append(cellFn(columnName, 0, index))
+            header_array.append(cell_fn(columnName, 0, index))
         rows = []
-        for rowNumber, node in enumerate(self):
+        for row_number, node in enumerate(self):
             vals = []
-            for columnIndex, columnName in enumerate(header):
-                childNode = node.getNode(columnName)
-                content = childNode.getContentWithChildren() if childNode else ""
-                vals.append(cellFn(content, rowNumber + skipHeaderRow, columnIndex))
+            for column_index, columnName in enumerate(header):
+                child_node = node.getNode(columnName)
+                content = child_node.getContentWithChildren() if child_node else ""
+                vals.append(cell_fn(content, row_number + skip_header_row, column_index))
             rows.append(vals)
 
-        return headerArray, rows
+        return header_array, rows
 
-    def getContentWithChildren(self):
+    def get_content_with_children(self):
         # todo: deprecate
-        content = self.getContent()
-        return (content if content else "") + (self.getYI() + self._childrenToString() if len(self) else "")
+        content = self.get_content()
+        return (content if content else "") + (self.get_yi() + self._children_to_string() if len(self) else "")
 
     @staticmethod
-    def fromCsv(str_):
-        return pytree.fromDelimited(str_, ",", '"')
+    def from_csv(str_):
+        return Pytree.from_delimited(str_, ",", '"')
 
     @staticmethod
-    def fromJson(str_):
-        return pytree(json.parse(str_))
+    def from_json(str_):
+        return Pytree(json.parse(str_))
 
     @staticmethod
-    def fromSsv(str_):
-        return pytree.fromDelimited(str_, " ", '"')
+    def from_ssv(str_):
+        return Pytree.from_delimited(str_, " ", '"')
 
     @staticmethod
-    def fromTsv(str_):
-        return pytree.fromDelimited(str_, "\t", '"')
+    def from_tsv(str_):
+        return Pytree.from_delimited(str_, "\t", '"')
 
     @staticmethod
-    def fromDelimited(str_, delimiter, quoteChar):
-        rows = pytree._getEscapedRows(str_, delimiter, quoteChar)
-        return pytree._rowsToTreeNode(rows, delimiter, True)
+    def from_delimited(str_, delimiter, quote_char):
+        rows = Pytree._get_escaped_rows(str_, delimiter, quote_char)
+        return Pytree._rows_to_tree_node(rows, delimiter, True)
 
     @staticmethod
-    def _getEscapedRows(str_, delimiter: str, quoteChar: str) -> List[List[str]]:
-        if str_.count(quoteChar):
-            return pytree._strToRows(str_, delimiter, quoteChar)
+    def _get_escaped_rows(str_, delimiter: str, quote_char: str) -> List[List[str]]:
+        if str_.count(quote_char):
+            return Pytree._str_to_rows(str_, delimiter, quote_char)
         else:
-            escapedRows = []
+            escaped_rows = []
             for line in str_.split("\n"):
-                escapedRows.append(line.split(delimiter))
-            return escapedRows
+                escaped_rows.append(line.split(delimiter))
+            return escaped_rows
 
     @staticmethod
-    def fromDelimitedNoHeaders(str_, delimiter, quoteChar):
-        rows = pytree._getEscapedRows(str_, delimiter, quoteChar)
-        return pytree._rowsToTreeNode(rows, delimiter, False)
+    def from_delimited_no_headers(str_, delimiter, quote_char):
+        rows = Pytree._get_escaped_rows(str_, delimiter, quote_char)
+        return Pytree._rows_to_tree_node(rows, delimiter, False)
 
     @staticmethod
-    def _get_header(rows, hasHeaders):
+    def _get_header(rows, has_headers):
         number_of_columns = len(rows[0])
-        head_row = rows[0] if hasHeaders else []
+        head_row = rows[0] if has_headers else []
         ZI = " "
 
-        if hasHeaders:
+        if has_headers:
             # Strip any ZIs from column names in the header row.
             # self.makes the mapping not quite 1 to 1 if there are any ZIs in names.
             index = 0
@@ -414,16 +414,16 @@ class ImmutablePytree():
 
     # Given an array return a tree
     @staticmethod
-    def _rowsToTreeNode(rows, delimiter, hasHeaders):
+    def _rows_to_tree_node(rows, delimiter, has_headers):
         number_of_columns = len(rows[0])
-        treeNode = pytree()
-        names = pytree._get_header(rows, hasHeaders)
+        tree_node = Pytree()
+        names = Pytree._get_header(rows, has_headers)
 
-        rowCount = len(rows)
-        rowIndex = 1 if hasHeaders else 0
-        while rowIndex < rowCount:
-            rowTree = pytree()
-            row = rows[rowIndex]
+        row_count = len(rows)
+        row_index = 1 if has_headers else 0
+        while row_index < row_count:
+            row_tree = Pytree()
+            row = rows[row_index]
             # If the row contains too many columns, shift the extra columns onto the last one.
             # this allows you to not have to escape delimiter characters in the final column.
             if len(row) > number_of_columns:
@@ -439,72 +439,72 @@ class ImmutablePytree():
             for index, cellValue in enumerate(row):
                 obj[names[index]] = cellValue
 
-            treeNode.push_content_and_children(None, obj)
-            rowIndex += 1
+            tree_node.push_content_and_children(None, obj)
+            row_index += 1
 
-        return treeNode
+        return tree_node
 
     @staticmethod
     def iris():
-        return pytree.fromCsv(datasets["iris"])
+        return Pytree.from_csv(datasets["iris"])
 
     @staticmethod
-    def _strToRows(str_, delimiter, quoteChar, newLineChar="\n"):
+    def _str_to_rows(str_, delimiter, quote_char, new_line_char="\n"):
         rows = [[]]
         length = len(str_)
-        currentCell = ""
-        inQuote = str_[0:1] == quoteChar
-        currentPosition = 1 if inQuote else 0
-        nextChar = None
-        isLastChar = None
-        currentRow = 0
+        current_cell = ""
+        in_quote = str_[0:1] == quote_char
+        current_position = 1 if in_quote else 0
+        next_char = None
+        is_last_char = None
+        current_row = 0
         char = None
-        isNextCharAQuote = None
+        is_next_char_a_quote = None
 
-        while currentPosition < length:
-            char = str_[currentPosition]
-            isLastChar = currentPosition + 1 == length
-            nextChar = str_[currentPosition + 1]
-            isNextCharAQuote = nextChar == quoteChar
+        while current_position < length:
+            char = str_[current_position]
+            is_last_char = current_position + 1 == length
+            next_char = str_[current_position + 1]
+            is_next_char_a_quote = next_char == quote_char
 
-            if inQuote:
-                if char != quoteChar:
-                    currentCell += char
-                elif isNextCharAQuote:
+            if in_quote:
+                if char != quote_char:
+                    current_cell += char
+                elif is_next_char_a_quote:
                     # Both the current and next char are ", so the " is escaped
-                    currentCell += nextChar
-                    currentPosition += 1  # Jump 2
+                    current_cell += next_char
+                    current_position += 1  # Jump 2
                 else:
                     # If the current char is a " and the next char is not, it's the end of the quotes
-                    inQuote = False
-                    if isLastChar:
-                        rows[currentRow].append(currentCell)
+                    in_quote = False
+                    if is_last_char:
+                        rows[current_row].append(current_cell)
 
             else:
                 if char == delimiter:
-                    rows[currentRow].append(currentCell)
-                    currentCell = ""
-                    if isNextCharAQuote:
-                        inQuote = True
-                        currentPosition += 1  # Jump 2
-                elif char == newLineChar:
-                    rows[currentRow].append(currentCell)
-                    currentCell = ""
-                    currentRow += 1
-                    if nextChar:
-                        rows[currentRow] = []
-                    if isNextCharAQuote:
-                        inQuote = True
-                        currentPosition += 1  # Jump 2
-                elif isLastChar:
-                    rows[currentRow].append(currentCell + char)
+                    rows[current_row].append(current_cell)
+                    current_cell = ""
+                    if is_next_char_a_quote:
+                        in_quote = True
+                        current_position += 1  # Jump 2
+                elif char == new_line_char:
+                    rows[current_row].append(current_cell)
+                    current_cell = ""
+                    current_row += 1
+                    if next_char:
+                        rows[current_row] = []
+                    if is_next_char_a_quote:
+                        in_quote = True
+                        current_position += 1  # Jump 2
+                elif is_last_char:
+                    rows[current_row].append(current_cell + char)
                 else:
-                    currentCell += char
-            currentPosition += 1
+                    current_cell += char
+            current_position += 1
         return rows
 
 
-class pytree(ImmutablePytree):
+class Pytree(ImmutablePytree):
 
     def set(self):
         return 1
@@ -526,16 +526,16 @@ if __name__ == '__main__':
     #    tree = pytree.iris()
     #    print(tree.clone()[0:2])
 
-    tree = pytree(epoch0)
+    tree = Pytree(epoch0)
     #    print(tree[0][1])
 
     #   print(tree.get("epoch train_loss"))
 
-    tree = pytree(epoch0)
-    print(tree.toCsv())
+    tree = Pytree(epoch0)
+    print(tree.to_csv())
 
-    tree = pytree.iris()
-    print(tree.toCsv())
+    tree = Pytree.iris()
+    print(tree.to_csv())
 
     # tree[0:2]
     # assert len(tree) == 10

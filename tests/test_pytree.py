@@ -19,7 +19,7 @@ def response():
 
 def test_basic(response):
     """Sample pytest test function with the pytest fixture as an argument."""
-    pytree = PyTree.pytree
+    pytree = PyTree.Pytree
     tree = pytree("hello world this is a test\nit worked\nnest\n it")
     assert len(tree) == 3
 
