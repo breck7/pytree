@@ -1,77 +1,63 @@
 """
 Make a direct mapping between S-expressions and a TN
 
-The TN
+((word0 word1 ... ) (...child0...) (...child1...) ...)
 
-a b
- c d
-   z
-e f
- g
- h
- i
-
-is mapped to
-
-(nil
- ((a b)
-  ((c d)
-   (()
-    ((z)))))
- ((e f)
-  ((g))
-  ((h))
-  ((i))))
-
-or in Python
-
-[None,
- [[a, b],
-  [[c, d],
-   [[],
-    [[z]]]]],
- [[e, f],
-  [[g]],
-  [[h]],
-  [[i]]]]
 """
 
-import math
-from itertools import takewhile
+EDGE_CHAR = ' '
+WORD_BREAK = ' '
+NODE_BREAK = '\n'
 
 
-def get_the_first_block(lines, edge_char):
-    rest_lines = iter(lines)
-    for i_line, line in enumerate(lines):
-        x, y, z = line.partition(edge_char)
-        if not x:
-            # the line does not start with edge_char
-            # implying the block has ended
-            break
+def get_the_first_block(lines):
+    if not lines:
+        raise ValueError('lines is empty')
+
+    lines_iter = iter(lines)
+    block_lines = []
+    rest_lines = []
+
+    node = next(lines_iter)
+
+    # keep adding the line with the first edge_char trimmed to the list of
+    # block_lines, until we hit a line that does not start with edge_char
+    for line in lines_iter:
+        if line.startswith(EDGE_CHAR):
+            block_lines.append(line[len(EDGE_CHAR):])
         else:
-            # strip one edge_char from the left of the line
-            # and add it to the returning block
-            block_lines.append(z)
+            rest_lines.append(line)
+            break
 
-    return block_lines
+    rest_lines.extend(lines_iter)
 
-
-def get_tn_from_str(str_, max_lvl=math.inf, node_break='\n', edge_char=' ', word_break=' '):
-    lines = str_.split(node_break)
-    for line in lines:
-        lvl = sum(1 for _ in takewhile(lambda x: x == edge_char, line))
+    return node, block_lines, rest_lines
 
 
-def main():
-    x = ArrayTree()
+def get_blocks(lines):
+    rest_lines = lines
+    while rest_lines:
+        node, block_lines, rest_lines = get_the_first_block(rest_lines)
+        blocks = list(get_blocks(block_lines))
+        yield [node.split(WORD_BREAK)] + blocks
 
 
-if __name__ == '__main__':
-    main()
+def str_to_tn(str_):
+    lines = str_.split(NODE_BREAK)
+    return list(get_blocks(lines))
 
-# type tree
-#   .get(0, 0, 0) -> tree
-#   .root -> List[str]
+
+def tn_to_lines(tn, lvl=0):
+    lines = []
+    for node, *block in tn:
+        lines.append(EDGE_CHAR * lvl + WORD_BREAK.join(node))
+        lines += tn_to_lines(block, lvl + 1)
+    return lines
+
+
+def tn_to_str(tn, lvl=0):
+    return '\n'.join(tn_to_lines(tn))
+
 
 # to pass the swim test
 # x.to_string()
@@ -87,3 +73,58 @@ if __name__ == '__main__':
 
 # x.to_json()
 # x.get_n_nodes()
+
+
+def test():
+    example_tree = """\
+a b
+ c d
+  e
+  f
+g
+   h
+   i
+   j"""
+
+    answer = [
+        [],
+        [
+            [
+                ['a', 'b'],
+                [
+                    ['c', 'd'],
+                    [
+                        ['e'],
+                    ],
+                    [
+                        ['f'],
+                    ],
+                ],
+            ],
+            [
+                ['g'],
+                [
+                    ['', '', 'h'],
+                    [
+                        ['', 'i'],
+                        [
+                            ['j'],
+                        ],
+                    ],
+                ],
+            ],
+        ],
+    ]
+
+    print(example_tree)
+
+    result = list(str_to_tn(example_tree))
+    print(result)
+
+    print(str(result) == str(answer))
+
+    print(tn_to_str(result))
+
+
+if __name__ == '__main__':
+    test()
