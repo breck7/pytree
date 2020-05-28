@@ -1,26 +1,13 @@
 """Tests for `pytree` package."""
 
-import pytest
 from click.testing import CliRunner
 
 from pytree import cli
-from pytree import pytree as PyTree
+from pytree.pytree import Pytree
 
 
-@pytest.fixture
-def response():
-    """Sample pytest fixture.
-
-    See more at: http://doc.pytest.org/en/latest/fixture.html
-    """
-    # import requests
-    # return requests.get('https://github.com/audreyr/cookiecutter-pypackage')
-
-
-def test_basic(response):
-    """Sample pytest test function with the pytest fixture as an argument."""
-    pytree = PyTree.Pytree
-    tree = pytree("hello world this is a test\nit worked\nnest\n it")
+def test_basic():
+    tree = Pytree("hello world this is a test\nit worked\nnest\n it")
     assert len(tree) == 3
 
     sample = """name John
@@ -32,36 +19,36 @@ favoriteColors
  green
  red 1
 """
-    tree = pytree(sample)
+    tree = Pytree(sample)
     assert sample == str(tree)
 
     di = {"seed": 428, "name": "joe"}
-    tree = pytree(di)
+    tree = Pytree(di)
     print(str(tree))
     assert len(tree) == 2
 
-    tree = pytree.iris()
+    tree = Pytree.iris()
     assert len(tree) == 10
 
     # Dicts can't have dupe keys
     di = {"seed": 428, "sib": {"frank": 2}, "name": "joe", "seed": 12}  # NOQA
-    tree = pytree(di)
+    tree = Pytree(di)
     assert len(tree) == 3
 
-    tree = pytree.iris()
+    tree = Pytree.iris()
     i = 0
     for item in tree:
         i += 1
 
     assert i == 10
 
-    tree = pytree("seed 2")
+    tree = Pytree("seed 2")
     assert "seed" in tree
 
-    tree = pytree.iris()
+    tree = Pytree.iris()
     assert len(tree.clone()[0:2]) == 2
 
-    tree = pytree(sample)
+    tree = Pytree(sample)
     assert tree.get("favoriteColors blue blue1") == "1"
 
 
@@ -69,8 +56,31 @@ def test_command_line_interface():
     """Test the CLI."""
     runner = CliRunner()
     result = runner.invoke(cli.main)
+
     assert result.exit_code == 0
     assert 'pytree.cli.main' in result.output
+
     help_result = runner.invoke(cli.main, ['--help'])
+
     assert help_result.exit_code == 0
     assert '--help  Show this message and exit.' in help_result.output
+
+
+def test_epoch():
+    epoch0 = """epoch
+     id 0
+     train_loss 0.32889
+     train_f1 0.12164
+     valid_loss 0.14605
+     valid_f1 0.16386
+     time 0 hr 23 min
+     best_val_loss 0.14605
+     best_val_f1 0.16386"""
+
+    tree = Pytree(epoch0)
+    print(tree.to_csv())
+
+    tree = Pytree.iris()
+    print(tree.to_csv())
+
+    assert len(tree) == 10

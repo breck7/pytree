@@ -160,7 +160,7 @@ class ImmutablePytree():
         self._set_line_and_children(line, children)
 
     def get_yi_regex(self):
-        # todo: return RegExp(self.getYI(), "g")
+        # todo: return RegExp(self.get_yi(), "g")
         return self.get_yi()
 
     def _get_indent_count(self, str_):
@@ -191,7 +191,7 @@ class ImmutablePytree():
 
             line_content = line[current_indent_count:]
             parent = parent_stack[len(parent_stack) - 1]
-            parse_class = parent.parseNodeType(line_content)
+            parse_class = parent.parse_node_type(line_content)
             last_node = parse_class(None, line_content, parent)
             parent._get_children_array().append(last_node)
         return self
@@ -210,8 +210,8 @@ class ImmutablePytree():
 
     def _children_to_string(self, indent_count=0, language=None):
         language = language or self
-        res = map(lambda node: node.toString(indent_count, language), self._get_children())
-        return language.getYI().join(res)
+        res = map(lambda node: node.to_string(indent_count, language), self._get_children())
+        return language.get_yi().join(res)
 
     def children_to_string(self):
         return self._children_to_string()
@@ -248,7 +248,7 @@ class ImmutablePytree():
 
     def get(self, keyword_path):
         node = self._get_node_by_path(keyword_path)
-        return None if node is None else node.getContent()
+        return None if node is None else node.get_content()
 
     def get_node(self, keyword_path):
         return self._get_node_by_path(keyword_path)
@@ -290,7 +290,7 @@ class ImmutablePytree():
         if self.is_root():
             return self._children_to_string(indent_count, language)
         content = (self.get_xi() * indent_count) + self.get_line(language)
-        value = content + (language.getYI() + self._children_to_string(indent_count + 1, language) if len(self) else "")
+        value = content + (language.get_yi() + self._children_to_string(indent_count + 1, language) if len(self) else "")
         return value
 
     def is_root(self, relative_to=None):
@@ -505,37 +505,5 @@ class ImmutablePytree():
 
 
 class Pytree(ImmutablePytree):
-
     def set(self):
         return 1
-
-
-epoch0 = """epoch
- id 0
- train_loss 0.32889
- train_f1 0.12164
- valid_loss 0.14605
- valid_f1 0.16386
- time 0 hr 23 min
- best_val_loss 0.14605
- best_val_f1 0.16386"""
-
-if __name__ == '__main__':
-    #tree = pytree("hello world this is a test\nit worked\nnest\n it")
-    #print(str(tree))
-    #    tree = pytree.iris()
-    #    print(tree.clone()[0:2])
-
-    tree = Pytree(epoch0)
-    #    print(tree[0][1])
-
-    #   print(tree.get("epoch train_loss"))
-
-    tree = Pytree(epoch0)
-    print(tree.to_csv())
-
-    tree = Pytree.iris()
-    print(tree.to_csv())
-
-    # tree[0:2]
-    # assert len(tree) == 10
