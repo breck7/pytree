@@ -505,37 +505,5 @@ class ImmutablePytree():
 
 
 class Pytree(ImmutablePytree):
-
     def set(self):
         return 1
-
-
-epoch0 = """epoch
- id 0
- train_loss 0.32889
- train_f1 0.12164
- valid_loss 0.14605
- valid_f1 0.16386
- time 0 hr 23 min
- best_val_loss 0.14605
- best_val_f1 0.16386"""
-
-if __name__ == '__main__':
-    #tree = pytree("hello world this is a test\nit worked\nnest\n it")
-    #print(str(tree))
-    #    tree = pytree.iris()
-    #    print(tree.clone()[0:2])
-
-    tree = Pytree(epoch0)
-    #    print(tree[0][1])
-
-    #   print(tree.get("epoch train_loss"))
-
-    tree = Pytree(epoch0)
-    print(tree.to_csv())
-
-    tree = Pytree.iris()
-    print(tree.to_csv())
-
-    # tree[0:2]
-    # assert len(tree) == 10

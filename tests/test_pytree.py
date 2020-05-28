@@ -64,3 +64,23 @@ def test_command_line_interface():
 
     assert help_result.exit_code == 0
     assert '--help  Show this message and exit.' in help_result.output
+
+
+def test_epoch():
+    epoch0 = """epoch
+     id 0
+     train_loss 0.32889
+     train_f1 0.12164
+     valid_loss 0.14605
+     valid_f1 0.16386
+     time 0 hr 23 min
+     best_val_loss 0.14605
+     best_val_f1 0.16386"""
+
+    tree = Pytree(epoch0)
+    print(tree.to_csv())
+
+    tree = Pytree.iris()
+    print(tree.to_csv())
+
+    assert len(tree) == 10
