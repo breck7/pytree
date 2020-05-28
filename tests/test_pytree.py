@@ -1,24 +1,12 @@
 """Tests for `pytree` package."""
 
-import pytest
 from click.testing import CliRunner
 
 from pytree import cli
 from pytree import pytree as PyTree
 
 
-@pytest.fixture
-def response():
-    """Sample pytest fixture.
-
-    See more at: http://doc.pytest.org/en/latest/fixture.html
-    """
-    # import requests
-    # return requests.get('https://github.com/audreyr/cookiecutter-pypackage')
-
-
-def test_basic(response):
-    """Sample pytest test function with the pytest fixture as an argument."""
+def test_basic():
     pytree = PyTree.Pytree
     tree = pytree("hello world this is a test\nit worked\nnest\n it")
     assert len(tree) == 3
@@ -69,8 +57,11 @@ def test_command_line_interface():
     """Test the CLI."""
     runner = CliRunner()
     result = runner.invoke(cli.main)
+
     assert result.exit_code == 0
     assert 'pytree.cli.main' in result.output
+
     help_result = runner.invoke(cli.main, ['--help'])
+
     assert help_result.exit_code == 0
     assert '--help  Show this message and exit.' in help_result.output
