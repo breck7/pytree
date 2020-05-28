@@ -3,12 +3,11 @@
 from click.testing import CliRunner
 
 from pytree import cli
-from pytree import pytree as PyTree
+from pytree.pytree import Pytree
 
 
 def test_basic():
-    pytree = PyTree.Pytree
-    tree = pytree("hello world this is a test\nit worked\nnest\n it")
+    tree = Pytree("hello world this is a test\nit worked\nnest\n it")
     assert len(tree) == 3
 
     sample = """name John
@@ -20,36 +19,36 @@ favoriteColors
  green
  red 1
 """
-    tree = pytree(sample)
+    tree = Pytree(sample)
     assert sample == str(tree)
 
     di = {"seed": 428, "name": "joe"}
-    tree = pytree(di)
+    tree = Pytree(di)
     print(str(tree))
     assert len(tree) == 2
 
-    tree = pytree.iris()
+    tree = Pytree.iris()
     assert len(tree) == 10
 
     # Dicts can't have dupe keys
     di = {"seed": 428, "sib": {"frank": 2}, "name": "joe", "seed": 12}  # NOQA
-    tree = pytree(di)
+    tree = Pytree(di)
     assert len(tree) == 3
 
-    tree = pytree.iris()
+    tree = Pytree.iris()
     i = 0
     for item in tree:
         i += 1
 
     assert i == 10
 
-    tree = pytree("seed 2")
+    tree = Pytree("seed 2")
     assert "seed" in tree
 
-    tree = pytree.iris()
+    tree = Pytree.iris()
     assert len(tree.clone()[0:2]) == 2
 
-    tree = pytree(sample)
+    tree = Pytree(sample)
     assert tree.get("favoriteColors blue blue1") == "1"
 
 
